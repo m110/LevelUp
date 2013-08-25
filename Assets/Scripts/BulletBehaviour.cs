@@ -17,6 +17,7 @@ public class BulletBehaviour : MonoBehaviour {
 
     void OnCollisionEnter(Collision collision) {
         if (collision.collider.tag == "Enemy") {
+            game.IncreaseScore();
             Destroy(collision.collider.gameObject);
             Destroy(gameObject);
             game.enemySound.Play();

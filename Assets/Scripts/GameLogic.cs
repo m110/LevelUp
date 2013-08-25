@@ -9,18 +9,22 @@ public class GameLogic : MonoBehaviour {
     public GUIStyle powerAdvanceStyle;
     public GUIStyle powerLevelStyle;
     public GUIStyle powerTextStyle;
+    public GUIStyle timerBar;
 
     // Textures
     public Texture powerFrame;
     public Texture powerAdvance;
+    public Texture timerTexture;
 
     // Sounds
     public AudioSource shootSound;
     public AudioSource levelupSound;
     public AudioSource advanceSound;
     public AudioSource enemySound;
+    public AudioSource gameOverSound;
 
-    public GUIStyle timerBar;
+    // Score
+    private int score;
 
     // LevelUp Time
     private float levelUpTime;
@@ -45,15 +49,18 @@ public class GameLogic : MonoBehaviour {
     private const float distanceFromDummy = 30.0f;
 
     // GUI stuff
-    private Rect levelUpLabel = new Rect(128.0f, Screen.height - 170.0f, 320.0f, 64.0f);
-    private Rect powersPanel = new Rect(128.0f, Screen.height - 110.0f, 512.0f, 128.0f);
+    private Rect levelUpLabel = new Rect(16.0f, Screen.height - 170.0f, 320.0f, 64.0f);
+    private Rect powersPanel = new Rect(16.0f, Screen.height - 110.0f, 512.0f, 110.0f);
     // Power frames (relative to powersPanel)
     private Rect powerFramePanel = new Rect(0, 0, 96, 96);
     private Rect powerFrameAdvance = new Rect(36, 2, 25, 25);
     private Rect powerFrameLevel = new Rect(12, 24, 72, 48);
     private Rect powerFrameText = new Rect(12, 75, 72, 16);
 
-    private Rect rightPanel = new Rect(Screen.width - 150.0f, Screen.height - 100.0f, 130.0f, 40.0f);
+    private Rect rightPanel = new Rect(Screen.width - 130.0f, Screen.height - 100.0f, 200.0f, 120.0f);
+    private Rect levelLabel = new Rect(12, 0, 72, 25);
+
+    private Rect introPanel = new Rect(Screen.width / 2.0f - 150.0f, Screen.height / 2.0f - 150.0f, 300.0f, 300.0f);
     private Rect gameOverPanel = new Rect(Screen.width / 2.0f - 100.0f, Screen.height / 2.0f - 100.0f, 200.0f, 200.0f);
 
     private string[] powersTitles = { "Bullet Speed", "Fire Rate", "Rotation Speed" };
@@ -68,8 +75,7 @@ public class GameLogic : MonoBehaviour {
 	void Start() {
         player = GameObject.Find("Player").GetComponent<PlayerControls>();
         dummies = GameObject.FindGameObjectsWithTag("Dummy");
-        paused = intro = false; // to-do set to false
-        Initialize(); // to-do remove
+        paused = intro = true;
 	}
 
     private void Initialize() {
@@ -80,6 +86,7 @@ public class GameLogic : MonoBehaviour {
 
         levelUpTime = 0.0f;
         enemySpawnTime = 0; // Timer off - spawn enemies at start
+        score = 0;
        
         player.Initialize();
     }
@@ -97,12 +104,14 @@ public class GameLogic : MonoBehaviour {
         foreach (GameObject bullet in GameObject.FindGameObjectsWithTag("Bullet")) {
             Destroy(bullet);
         }
+
+        gameOverSound.Play();
     }
 
     void Update() {
         if (paused) {
             if (Input.GetKeyDown(KeyCode.Space)) {
-                Invoke("Initialize", 0.1f);
+                Invoke("Initialize", 0.25f);
             }
             return;
         }
@@ -141,14 +150,27 @@ public class GameLogic : MonoBehaviour {
 
     void OnGUI() {
         if (paused) {
-            GUI.Box(gameOverPanel, "");
-            GUILayout.BeginArea(gameOverPanel);
+            GUI.Box(introPanel, "");
 
             if (intro) {
+                GUILayout.BeginArea(introPanel);
+                GUILayout.Label("Hello! This game was made during Ludum Dare 27.", powerTextStyle);
+                GUILayout.Label("The rules are simple:", powerTextStyle);
+                GUILayout.Label(" - Rotate the player with arrow keys.");
+                GUILayout.Label(" - Up/Down arrow will rotate the player by 180*.");
+                GUILayout.Label(" - Shoot green enemies using Space.");
+                GUILayout.Label(" - Every 10 seconds you will level up.");
+                GUILayout.Label(" - Using Q, W and E improve your skills after leveling up.");
+                GUILayout.Label(" - Play as long as you can - game is getting harder as the time goes by.");
+                GUILayout.Label("");
+                GUILayout.Label("Thanks for playing and have fun! ~m1_10sz");
+                GUILayout.Label("");
                 GUILayout.Label("Press [SPACE] to start...", powerTextStyle);
             } else {
-                GUILayout.Label("GAME OVER", powerTextStyle);
-                GUILayout.Label("Press [SPACE] to restart...", powerTextStyle);
+                GUILayout.BeginArea(gameOverPanel);
+                GUILayout.Label("GAME OVER", powerLevelStyle);
+                GUILayout.Label("Score: " + score, powerLevelStyle);
+                GUILayout.Label("Press [SPACE] to restart...", powerAdvanceStyle);
             }
 
             GUILayout.EndArea();
@@ -182,17 +204,47 @@ public class GameLogic : MonoBehaviour {
 
                 GUILayout.EndArea();
             }
-       
 
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
 
-            GUI.Box(rightPanel, "");
             GUILayout.BeginArea(rightPanel);
-            GUILayout.Label("Level: " + player.level);
-            GUILayout.Label("Time: " + levelUpTime);
+
+            GUILayout.BeginArea(powerFramePanel, powerFrame);
+
+            GUILayout.BeginArea(levelLabel);
+                GUILayout.Label("Level", powerAdvanceStyle);
             GUILayout.EndArea();
-            GUI.Box(new Rect(Screen.width - 150.0f, Screen.height - 50.0f, 130.0f * (levelUpTime / 10.0f), 20.0f), "", timerBar);
+
+            GUILayout.BeginArea(powerFrameLevel);
+                GUILayout.Label("" + player.level, powerLevelStyle);
+            GUILayout.EndArea();
+
+            GUILayout.BeginArea(powerFrameText);
+                GUILayout.Label("Score: " + score, powerTextStyle);
+            GUILayout.EndArea();
+
+            GUILayout.EndArea();
+
+            GUILayout.EndArea();
+
+            // Timer
+            float percentDone = levelUpTime / levelUpBaseTime;
+            float height = 48.0f;
+
+            Rect rect = new Rect(Screen.width - 40.0f, Screen.height - 28.0f - percentDone * height, 
+                30.0f, height * percentDone);
+
+            GUI.DrawTexture(rect, timerTexture);
+
+            rect.width = 28.0f;
+            rect.height = 8.0f;
+            rect.y -= 10.0f;
+            GUI.Label(rect, levelUpTime.ToString("0.00"), powerTextStyle);
         }
+    }
+
+    public void IncreaseScore() {
+        score++;
     }
 }
