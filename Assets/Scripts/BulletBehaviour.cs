@@ -3,17 +3,23 @@ using System.Collections;
 
 public class BulletBehaviour : MonoBehaviour {
 
-	void Start() {
-	
-	}
-	
-	void Update() {
-	
-	}
+    private GameLogic game;
 
+	void Start() {
+        game = Camera.main.GetComponent<GameLogic>();
+	}
+	
     void OnTriggerEnter(Collider collider) {
-        if (collider.tag == "wall"/* || collider.tag == "Player"*/) {
+        if (collider.tag == "Wall") {
             Destroy(gameObject);
+        }
+    }
+
+    void OnCollisionEnter(Collision collision) {
+        if (collision.collider.tag == "Enemy") {
+            Destroy(collision.collider.gameObject);
+            Destroy(gameObject);
+            game.enemySound.Play();
         }
     }
 }
