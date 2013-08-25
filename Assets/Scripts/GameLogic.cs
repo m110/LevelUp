@@ -15,7 +15,7 @@ public class GameLogic : MonoBehaviour {
 
     // LevelUp Time
     private float levelUpTime;
-    private const float levelUpBaseTime = 2f;
+    private const float levelUpBaseTime = 10f;
 
     // EnemySpawn Time
     private float enemySpawnTime;
@@ -24,11 +24,11 @@ public class GameLogic : MonoBehaviour {
 
     // Enemy speed
     private const float enemyBaseSpeed = 20.0f;
-    private const float enemySpeedStep = 5.0f;
+    private const float enemySpeedStep = 6.0f;
 
     // Enemies count in single wave
-    private const float minEnemies = 1;
-    private const float maxEnemies = 3;
+    private const int minEnemies = 1;
+    private const int maxEnemies = 5;
 
     private PlayerControls player;
     private GameObject[] dummies;
@@ -48,11 +48,7 @@ public class GameLogic : MonoBehaviour {
 
     void Initialize() {
         levelUpTime = 0.0f;
-        enemySpawnTime = enemySpawnBaseTime;
-
-        for (int i = 0; i < 5; i++) {
-            SpawnEnemy();
-        }
+        enemySpawnTime = 0; // Timer off - spawn enemies at start
     }
 
     void Update() {
@@ -63,7 +59,9 @@ public class GameLogic : MonoBehaviour {
 
         if (enemySpawnTime <= 0.0f) {
             enemySpawnTime = enemySpawnBaseTime - (enemySpawnStep * player.level);
-            SpawnEnemy();
+            for (int i = minEnemies; i <= Random.Range(minEnemies, maxEnemies); i++) {
+                SpawnEnemy();
+            }
         } else enemySpawnTime -= Time.deltaTime;
 	}
 
@@ -74,11 +72,10 @@ public class GameLogic : MonoBehaviour {
 
         enemy.GetComponent<OTSprite>().position = position;
 
+        // Look at player
         Quaternion newRotation = Quaternion.LookRotation(position - player.transform.position, Vector3.forward);
-
         newRotation.x = 0.0f;
         newRotation.y = 0.0f;
-
         enemy.transform.rotation = newRotation;
 
         // Apply force

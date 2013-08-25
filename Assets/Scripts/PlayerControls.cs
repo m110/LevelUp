@@ -22,11 +22,11 @@ public class PlayerControls : MonoBehaviour {
 
     // Rate power
     private float shootCooldown;
-    private const float shootBaseCooldown = 0.8f;
-    private const float shootCooldownStep = 0.015f;
+    private const float shootBaseCooldown = 0.75f;
+    private const float shootCooldownStep = 0.025f;
 
     // Rotation power
-    private const float rotationBaseSpeed = 1.5f;
+    private const float rotationBaseSpeed = 1.75f;
     private const float rotationSpeedStep = 0.25f;
 
     // Growing player
@@ -100,6 +100,10 @@ public class PlayerControls : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.RightArrow)) {
             Rotate(true);
+        }
+
+        if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)) {
+            transform.Rotate(0, 0, 180.0f);
         }
 
         // Advance powers
