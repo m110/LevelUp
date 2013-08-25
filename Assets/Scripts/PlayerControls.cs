@@ -41,10 +41,9 @@ public class PlayerControls : MonoBehaviour {
         game = Camera.main.GetComponent<GameLogic>();
         baseScale = sprite.transform.localScale;
         powersLevels = new int[GameLogic.powersCount];
-        Initialize();   
 	}
 
-    void Initialize() {
+    public void Initialize() {
         level = 1;
         advancePoints = 0;
 
@@ -74,6 +73,10 @@ public class PlayerControls : MonoBehaviour {
     }
 
 	void Update() {
+        if (game.paused) {
+            return;
+        }
+
         // Shoot
         shootCooldown -= Time.deltaTime;
         if (Input.GetKey(KeyCode.Space) && shootCooldown <= 0.0f) {
@@ -127,7 +130,7 @@ public class PlayerControls : MonoBehaviour {
 
     void OnTriggerEnter(Collider collider) {
         if (collider.tag == "Enemy") {
-            Debug.Log("Game Over");
+            game.GameOver();
         }
     }
 }
